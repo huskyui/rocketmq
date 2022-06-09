@@ -75,18 +75,23 @@ public class NamesrvController {
 
     public boolean initialize() {
 
+        // 将本地文件中的 kvConfig配置的json,加载到内存中
         this.kvConfigManager.load();
 
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
 
+        // 新增，默认是coreThread 8 maxThread 8
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
 
+        // 没看懂
         this.registerProcessor();
 
-        this.scheduledExecutorService.scheduleAtFixedRate(NamesrvController.this.routeInfoManager::scanNotActiveBroker, 5, 10, TimeUnit.SECONDS);
+        // 设置一个定时任务，定时去校验。不活跃的broker
+        this.scheduledExecutorService.scheduleAtFixedRate(this.routeInfoManager::scanNotActiveBroker, 5, 10, TimeUnit.SECONDS);
 
-        this.scheduledExecutorService.scheduleAtFixedRate(NamesrvController.this.kvConfigManager::printAllPeriodically, 1, 10, TimeUnit.MINUTES);
+        // 定时任务，定时打印所有
+        this.scheduledExecutorService.scheduleAtFixedRate(this.kvConfigManager::printAllPeriodically, 1, 10, TimeUnit.MINUTES);
 
         if (TlsSystemConfig.tlsMode != TlsMode.DISABLED) {
             // Register a listener to reload SslContext
@@ -101,6 +106,7 @@ public class NamesrvController {
                         boolean certChanged, keyChanged = false;
                         @Override
                         public void onChanged(String path) {
+                            // 监听上述的文件变化
                             if (path.equals(TlsSystemConfig.tlsServerTrustCertPath)) {
                                 log.info("The trust certificate changed, reload the ssl context");
                                 reloadServerSslContext();
@@ -111,6 +117,7 @@ public class NamesrvController {
                             if (path.equals(TlsSystemConfig.tlsServerKeyPath)) {
                                 keyChanged = true;
                             }
+                            // cert&key all changed
                             if (certChanged && keyChanged) {
                                 log.info("The certificate and private key changed, reload the ssl context");
                                 certChanged = keyChanged = false;
@@ -141,8 +148,10 @@ public class NamesrvController {
     }
 
     public void start() throws Exception {
+        // remotingServer start
         this.remotingServer.start();
 
+        // 如果文件监听服务不为空，开启监听文件
         if (this.fileWatchService != null) {
             this.fileWatchService.start();
         }

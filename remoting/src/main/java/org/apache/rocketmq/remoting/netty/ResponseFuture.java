@@ -25,16 +25,37 @@ import org.apache.rocketmq.remoting.common.SemaphoreReleaseOnlyOnce;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 
 public class ResponseFuture {
+    // 唯一id
     private final int opaque;
+    // 处理的channel
     private final Channel processChannel;
+    /**
+     * 超时时间
+     */
     private final long timeoutMillis;
+    /**
+     * 结果回来后的回调
+     */
     private final InvokeCallback invokeCallback;
+    /**
+     * 开始时间戳
+     */
     private final long beginTimestamp = System.currentTimeMillis();
+    /**
+     * 配合timeout来处理的
+     */
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
 
+    /**
+     * 用于release 方法
+     */
     private final SemaphoreReleaseOnlyOnce once;
 
+    /**
+     * 标识是否调用了callback这个回调
+     */
     private final AtomicBoolean executeCallbackOnlyOnce = new AtomicBoolean(false);
+    // 没看懂
     private volatile RemotingCommand responseCommand;
     private volatile boolean sendRequestOK = true;
     private volatile Throwable cause;
@@ -49,7 +70,9 @@ public class ResponseFuture {
     }
 
     public void executeInvokeCallback() {
+        // 如果调用回调不为空
         if (invokeCallback != null) {
+            // 执行调用回调的callback标识位
             if (this.executeCallbackOnlyOnce.compareAndSet(false, true)) {
                 invokeCallback.operationComplete(this);
             }
@@ -62,11 +85,20 @@ public class ResponseFuture {
         }
     }
 
+    /**
+     * 提供方法，判断是否超时
+     */
     public boolean isTimeout() {
         long diff = System.currentTimeMillis() - this.beginTimestamp;
         return diff > this.timeoutMillis;
     }
 
+    /**
+     * 等待结果时间
+     * @param timeoutMillis
+     * @return
+     * @throws InterruptedException
+     */
     public RemotingCommand waitResponse(final long timeoutMillis) throws InterruptedException {
         this.countDownLatch.await(timeoutMillis, TimeUnit.MILLISECONDS);
         return this.responseCommand;

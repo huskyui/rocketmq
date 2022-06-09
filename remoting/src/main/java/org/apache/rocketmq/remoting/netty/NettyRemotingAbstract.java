@@ -155,9 +155,11 @@ public abstract class NettyRemotingAbstract {
         if (cmd != null) {
             switch (cmd.getType()) {
                 case REQUEST_COMMAND:
+                    // request
                     processRequestCommand(ctx, cmd);
                     break;
                 case RESPONSE_COMMAND:
+                    // response
                     processResponseCommand(ctx, cmd);
                     break;
                 default:
@@ -199,6 +201,7 @@ public abstract class NettyRemotingAbstract {
                 @Override
                 public void run() {
                     try {
+                        // get remote addr by channel
                         String remoteAddr = RemotingHelper.parseChannelRemoteAddr(ctx.channel());
                         doBeforeRpcHooks(remoteAddr, cmd);
                         final RemotingResponseCallback callback = new RemotingResponseCallback() {
@@ -287,16 +290,23 @@ public abstract class NettyRemotingAbstract {
      * @param cmd response command instance.
      */
     public void processResponseCommand(ChannelHandlerContext ctx, RemotingCommand cmd) {
+        // 从cmd中获取opaque
         final int opaque = cmd.getOpaque();
+        // 如果responseTable获取opaque
         final ResponseFuture responseFuture = responseTable.get(opaque);
+        // 不为null,说明在timeout的时间内完成了
         if (responseFuture != null) {
+            // 设置responseCommand
             responseFuture.setResponseCommand(cmd);
 
+            // responseTable remove掉当前  请求
             responseTable.remove(opaque);
 
+            // 当前请求存在调用回调的话
             if (responseFuture.getInvokeCallback() != null) {
                 executeInvokeCallback(responseFuture);
             } else {
+
                 responseFuture.putResponse(cmd);
                 responseFuture.release();
             }
@@ -312,12 +322,14 @@ public abstract class NettyRemotingAbstract {
     private void executeInvokeCallback(final ResponseFuture responseFuture) {
         boolean runInThisThread = false;
         ExecutorService executor = this.getCallbackExecutor();
+        // 线程池不为空
         if (executor != null) {
             try {
                 executor.submit(new Runnable() {
                     @Override
                     public void run() {
                         try {
+                            //
                             responseFuture.executeInvokeCallback();
                         } catch (Throwable e) {
                             log.warn("execute callback in executor exception, and callback throw", e);
@@ -334,12 +346,15 @@ public abstract class NettyRemotingAbstract {
             runInThisThread = true;
         }
 
+        // 线程池为空
         if (runInThisThread) {
             try {
+                // 当前线程直接调用invokeCallback
                 responseFuture.executeInvokeCallback();
             } catch (Throwable e) {
                 log.warn("executeInvokeCallback Exception", e);
             } finally {
+                // finally release   也就是一个cas操作
                 responseFuture.release();
             }
         }
@@ -412,13 +427,18 @@ public abstract class NettyRemotingAbstract {
         final int opaque = request.getOpaque();
 
         try {
+            // 同步调用时，会有一个responseTable来保存   responseTable用一个ConcurrentHashMap
             final ResponseFuture responseFuture = new ResponseFuture(channel, opaque, timeoutMillis, null, null);
+            //
             this.responseTable.put(opaque, responseFuture);
             final SocketAddress addr = channel.remoteAddress();
+            // 添加回调
             channel.writeAndFlush(request).addListener(new ChannelFutureListener() {
                 @Override
                 public void operationComplete(ChannelFuture f) throws Exception {
+                    // 获取channelFuture是否发送成功
                     if (f.isSuccess()) {
+                        // 如果发送测过，我们就给这个responseFuture设置为发送成功
                         responseFuture.setSendRequestOK(true);
                         return;
                     } else {
@@ -431,19 +451,23 @@ public abstract class NettyRemotingAbstract {
                     log.warn("send a request command to channel <" + addr + "> failed.");
                 }
             });
-
+            // 如果要实现超时。我们就用一个CountDownLatch来实现，具体是CountDownLatch await timeoutMillis
             RemotingCommand responseCommand = responseFuture.waitResponse(timeoutMillis);
+            // 如果是null
             if (null == responseCommand) {
+                // 发送成功，但是超时
                 if (responseFuture.isSendRequestOK()) {
                     throw new RemotingTimeoutException(RemotingHelper.parseSocketAddressAddr(addr), timeoutMillis,
                         responseFuture.getCause());
                 } else {
+                    // 发送失败
                     throw new RemotingSendRequestException(RemotingHelper.parseSocketAddressAddr(addr), responseFuture.getCause());
                 }
             }
-
+            // 返回结果
             return responseCommand;
         } finally {
+            // finally 都是会移除在responseTable移除这些
             this.responseTable.remove(opaque);
         }
     }

@@ -160,6 +160,7 @@ public class RemotingHelper {
         if (null == channel) {
             return "";
         }
+        // channel attr 支持设置参数
         Attribute<String> att = channel.attr(REMOTE_ADDR_KEY);
         if (att == null) {
             // mocked in unit test

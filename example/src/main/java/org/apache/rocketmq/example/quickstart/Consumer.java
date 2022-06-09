@@ -17,6 +17,8 @@
 package org.apache.rocketmq.example.quickstart;
 
 import java.util.List;
+
+import io.netty.util.CharsetUtil;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyStatus;
@@ -48,6 +50,7 @@ public class Consumer {
          * }
          * </pre>
          */
+        consumer.setNamesrvAddr("127.0.0.1:9876");
 
         /*
          * Specify where to start in case the specific consumer group is a brand-new one.
@@ -68,6 +71,9 @@ public class Consumer {
             public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                 ConsumeConcurrentlyContext context) {
                 System.out.printf("%s Receive New Messages: %s %n", Thread.currentThread().getName(), msgs);
+                MessageExt messageExt = msgs.get(0);
+                String message = new String(messageExt.getBody(), CharsetUtil.UTF_8);
+                System.out.println(message);
                 return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
             }
         });

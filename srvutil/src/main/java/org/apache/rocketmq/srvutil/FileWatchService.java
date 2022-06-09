@@ -41,14 +41,20 @@ public class FileWatchService extends ServiceThread {
     private static final int WATCH_INTERVAL = 500;
     private MessageDigest md = MessageDigest.getInstance("MD5");
 
+    // 构造参数
     public FileWatchService(final String[] watchFiles,
         final Listener listener) throws Exception {
+        // 赋值监听器
         this.listener = listener;
+        // 新建文件
         this.watchFiles = new ArrayList<>();
         this.fileCurrentHash = new ArrayList<>();
 
+        // 对参数进行校验
         for (int i = 0; i < watchFiles.length; i++) {
+            // 输入的文件路径不为空，且这个文件存在
             if (StringUtils.isNotEmpty(watchFiles[i]) && new File(watchFiles[i]).exists()) {
+                // 添加到 watchFiles中去
                 this.watchFiles.add(watchFiles[i]);
                 this.fileCurrentHash.add(hash(watchFiles[i]));
             }
@@ -70,14 +76,17 @@ public class FileWatchService extends ServiceThread {
 
                 for (int i = 0; i < watchFiles.size(); i++) {
                     String newHash;
+                    // 获取文件通过新的md5获取的newHash
                     try {
                         newHash = hash(watchFiles.get(i));
                     } catch (Exception ignored) {
                         log.warn(this.getServiceName() + " service has exception when calculate the file hash. ", ignored);
                         continue;
                     }
+                    // 如果新的文件的md5不等于旧的md5值
                     if (!newHash.equals(fileCurrentHash.get(i))) {
                         fileCurrentHash.set(i, newHash);
+                        // 触发回调
                         listener.onChanged(watchFiles.get(i));
                     }
                 }

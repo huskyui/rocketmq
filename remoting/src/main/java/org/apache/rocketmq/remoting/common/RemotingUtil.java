@@ -217,6 +217,7 @@ public class RemotingUtil {
     }
 
     public static void closeChannel(Channel channel) {
+        // 从channel 获取 remote address。  通过
         final String addrRemote = RemotingHelper.parseChannelRemoteAddr(channel);
         channel.close().addListener(new ChannelFutureListener() {
             @Override

@@ -64,11 +64,14 @@ public class RouteInfoManagerTestBase {
         // no filterServer address
         List<String> filterServerAddr = new ArrayList<>();
 
+        // 生成topicConfig  topicPrefix   topicPrefix   topicNumber 10
         ConcurrentMap<String, TopicConfig> topicConfig = genTopicConfig(topicPrefix, topicNumber);
 
         for (int i = 0; i < brokerNameNumber; i++) {
+            // brokerName brokerNamePrefix+"_"+i
             String brokerName = getBrokerName(brokerNamePrefix, i);
 
+            // 生成一个主broker,后面更几个slave broker
             BrokerData brokerData = genBrokerData(cluster, brokerName, brokerPerName, true);
 
             // avoid object reference copy
@@ -140,9 +143,11 @@ public class RouteInfoManagerTestBase {
                                                  ConcurrentMap<String, TopicConfig> topicConfigTable,
                                                  List<String> filterServerAddr) {
 
+        //
         TopicConfigSerializeWrapper topicConfigSerializeWrapper = new TopicConfigSerializeWrapper();
         topicConfigSerializeWrapper.setTopicConfigTable(topicConfigTable);
 
+        // channel是embeddedChannel
         Channel channel = new EmbeddedChannel();
         return routeInfoManager.registerBroker(clusterName,
                 brokerAddr,
@@ -163,12 +168,17 @@ public class RouteInfoManagerTestBase {
         ConcurrentMap<String, TopicConfig> topicConfigMap = new ConcurrentHashMap<>();
 
         for (int i = 0; i < topicNumber; i++) {
+            // topicName   topicPrefix+"_"+i
             String topicName = getTopicName(topicPrefix, i);
 
+            // topic配置
             TopicConfig topicConfig = new TopicConfig();
+            // 8个写的queue
             topicConfig.setWriteQueueNums(8);
+            // topicName
             topicConfig.setTopicName(topicName);
             topicConfig.setPerm(6);
+            // 8个读queue
             topicConfig.setReadQueueNums(8);
             topicConfig.setOrder(false);
             topicConfigMap.put(topicName, topicConfig);

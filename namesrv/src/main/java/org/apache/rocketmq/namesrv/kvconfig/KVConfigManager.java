@@ -43,13 +43,17 @@ public class KVConfigManager {
     }
 
     public void load() {
+        //
         String content = null;
         try {
+            // 读取namesrv的kvconfig的路径的文件的内容，然后转成string
             content = MixAll.file2String(this.namesrvController.getNamesrvConfig().getKvConfigPath());
         } catch (IOException e) {
             log.warn("Load KV config table exception", e);
         }
+        // 如果字符串不为空，json解析。
         if (content != null) {
+            // json解析后，放入map中
             KVConfigSerializeWrapper kvConfigSerializeWrapper =
                 KVConfigSerializeWrapper.fromJson(content, KVConfigSerializeWrapper.class);
             if (null != kvConfigSerializeWrapper) {
