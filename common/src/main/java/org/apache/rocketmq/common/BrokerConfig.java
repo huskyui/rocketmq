@@ -57,7 +57,7 @@ public class BrokerConfig {
     @ImportantField
     private boolean traceTopicEnable = false;
     /**
-     * thread numbers for send message thread pool.
+     * thread numbers for send message thread pool.  取availableProcessors()  Math.min
      */
     private int sendMessageThreadPoolNums = Math.min(Runtime.getRuntime().availableProcessors(), 4);
     private int putMessageFutureThreadPoolNums = Math.min(Runtime.getRuntime().availableProcessors(), 4);

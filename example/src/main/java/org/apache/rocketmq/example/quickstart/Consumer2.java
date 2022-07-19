@@ -16,9 +16,6 @@
  */
 package org.apache.rocketmq.example.quickstart;
 
-import java.util.Date;
-import java.util.List;
-
 import io.netty.util.CharsetUtil;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.listener.ConsumeConcurrentlyContext;
@@ -28,10 +25,13 @@ import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.common.message.MessageExt;
 
+import java.util.Date;
+import java.util.List;
+
 /**
  * This example shows how to subscribe and consume messages using providing {@link DefaultMQPushConsumer}.
  */
-public class Consumer {
+public class Consumer2 {
 
     public static void main(String[] args) throws InterruptedException, MQClientException {
 

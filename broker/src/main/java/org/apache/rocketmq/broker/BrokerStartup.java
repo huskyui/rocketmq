@@ -87,6 +87,7 @@ public class BrokerStartup {
     }
 
     public static BrokerController createBrokerController(String[] args) {
+        // set system property
         System.setProperty(RemotingCommand.REMOTING_VERSION_KEY, Integer.toString(MQVersion.CURRENT_VERSION));
 
         try {
@@ -112,6 +113,7 @@ public class BrokerStartup {
                 messageStoreConfig.setAccessMessageInMemoryMaxRatio(ratio);
             }
 
+            // 启动是通过了这个
             if (commandLine.hasOption('c')) {
                 String file = commandLine.getOptionValue('c');
                 if (file != null) {
@@ -125,7 +127,7 @@ public class BrokerStartup {
                     MixAll.properties2Object(properties, nettyServerConfig);
                     MixAll.properties2Object(properties, nettyClientConfig);
                     MixAll.properties2Object(properties, messageStoreConfig);
-
+                    // 设置broker配置文件路径
                     BrokerPathConfigHelper.setBrokerConfigPath(file);
                     in.close();
                 }
@@ -138,9 +140,11 @@ public class BrokerStartup {
                 System.exit(-2);
             }
 
+            // 获取namesrv address
             String namesrvAddr = brokerConfig.getNamesrvAddr();
             if (null != namesrvAddr) {
                 try {
+                    // 可能存在多个namesrv实例
                     String[] addrArray = namesrvAddr.split(";");
                     for (String addr : addrArray) {
                         RemotingUtil.string2SocketAddress(addr);
@@ -153,6 +157,7 @@ public class BrokerStartup {
                 }
             }
 
+            // broker的角色：1. 如果你无法容忍丢失，你需要设置成 SYNC_MASTER并且设置一个slave跟随这个。2.如果你对丢失ok,但你希望是可用的，你需要用Async_master  并且  创建一个slave attch to master 3.最简单的，就是async_master without slave
             switch (messageStoreConfig.getBrokerRole()) {
                 case ASYNC_MASTER:
                 case SYNC_MASTER:
@@ -173,6 +178,7 @@ public class BrokerStartup {
                 brokerConfig.setBrokerId(-1);
             }
 
+            // high availability   （HA）高可用
             messageStoreConfig.setHaListenPort(nettyServerConfig.getListenPort() + 1);
             LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
             JoranConfigurator configurator = new JoranConfigurator();
@@ -217,12 +223,15 @@ public class BrokerStartup {
             // remember all configs to prevent discard
             controller.getConfiguration().registerConfig(properties);
 
+            // 初始化
             boolean initResult = controller.initialize();
+            // 初始化不成功，立即shutdown
             if (!initResult) {
                 controller.shutdown();
                 System.exit(-3);
             }
 
+            // add jvm shutdown hook
             Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
                 private volatile boolean hasShutdown = false;
                 private AtomicInteger shutdownTimes = new AtomicInteger(0);

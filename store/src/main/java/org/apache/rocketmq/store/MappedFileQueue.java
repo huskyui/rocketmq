@@ -147,9 +147,11 @@ public class MappedFileQueue {
 
 
     public boolean load() {
+        // 文件夹下的所有文件
         File dir = new File(this.storePath);
         File[] ls = dir.listFiles();
         if (ls != null) {
+            //
             return doLoad(Arrays.asList(ls));
         }
         return true;
@@ -157,6 +159,7 @@ public class MappedFileQueue {
 
     public boolean doLoad(List<File> files) {
         // ascending order
+        // 通过文件名  asc
         files.sort(Comparator.comparing(File::getName));
 
         for (File file : files) {

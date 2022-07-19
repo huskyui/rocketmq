@@ -154,12 +154,13 @@ public abstract class NettyRemotingAbstract {
         final RemotingCommand cmd = msg;
         if (cmd != null) {
             switch (cmd.getType()) {
+                // 区分消息类型
                 case REQUEST_COMMAND:
-                    // request
+                    // 处理request 命令
                     processRequestCommand(ctx, cmd);
                     break;
                 case RESPONSE_COMMAND:
-                    // response
+                    // 处理response 命令
                     processResponseCommand(ctx, cmd);
                     break;
                 default:
@@ -203,11 +204,15 @@ public abstract class NettyRemotingAbstract {
                     try {
                         // get remote addr by channel
                         String remoteAddr = RemotingHelper.parseChannelRemoteAddr(ctx.channel());
+                        // 存在前置 hook,依次执行hookList
                         doBeforeRpcHooks(remoteAddr, cmd);
+                        // create remotingResponse callback
                         final RemotingResponseCallback callback = new RemotingResponseCallback() {
                             @Override
                             public void callback(RemotingCommand response) {
+                                // do after hook
                                 doAfterRpcHooks(remoteAddr, cmd, response);
+
                                 if (!cmd.isOnewayRPC()) {
                                     if (response != null) {
                                         response.setOpaque(opaque);

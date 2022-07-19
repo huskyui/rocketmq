@@ -143,17 +143,22 @@ public class MixAll {
     public static void string2File(final String str, final String fileName) throws IOException {
 
         String tmpFile = fileName + ".tmp";
+        // 将内容str写入tmpFile路径中
         string2FileNotSafe(str, tmpFile);
 
+        // 获取原来的值
         String bakFile = fileName + ".bak";
         String prevContent = file2String(fileName);
         if (prevContent != null) {
+            // 也就是旧值写入 fileName.bak
             string2FileNotSafe(prevContent, bakFile);
         }
 
+        // 删除当前文件
         File file = new File(fileName);
         file.delete();
 
+        // 重命名
         file = new File(tmpFile);
         file.renameTo(new File(fileName));
     }

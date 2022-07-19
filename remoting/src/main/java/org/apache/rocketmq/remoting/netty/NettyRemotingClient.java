@@ -351,12 +351,16 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
         boolean update = false;
 
         if (!addrs.isEmpty()) {
+            // 旧的不存在,update flag  = true
             if (null == old) {
                 update = true;
+                // 数目不同   update = true
             } else if (addrs.size() != old.size()) {
                 update = true;
             } else {
+                // 数目相同代表，namesrv的列表可能相同
                 for (int i = 0; i < addrs.size() && !update; i++) {
+                    // 判断每一个是否相同
                     if (!old.contains(addrs.get(i))) {
                         update = true;
                     }
@@ -364,7 +368,9 @@ public class NettyRemotingClient extends NettyRemotingAbstract implements Remoti
             }
 
             if (update) {
+                // 洗牌
                 Collections.shuffle(addrs);
+
                 log.info("name server address updated. NEW : {} , OLD: {}", addrs, old);
                 this.namesrvAddrList.set(addrs);
 

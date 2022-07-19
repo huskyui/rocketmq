@@ -522,6 +522,7 @@ public class StoreStatsService extends ServiceThread {
 
         while (!this.isStopped()) {
             try {
+                // 一秒钟
                 this.waitForRunning(FREQUENCY_OF_SAMPLING);
 
                 this.sampling();

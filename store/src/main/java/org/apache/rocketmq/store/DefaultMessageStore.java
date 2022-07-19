@@ -194,6 +194,7 @@ public class DefaultMessageStore implements MessageStore {
         boolean result = true;
 
         try {
+            // 最后推出是否ok   判断abort文件
             boolean lastExitOK = !this.isTempFileExist();
             log.info("last shutdown {}", lastExitOK ? "normally" : "abnormally");
 
@@ -204,6 +205,7 @@ public class DefaultMessageStore implements MessageStore {
             result = result && this.loadConsumeQueue();
 
             if (result) {
+                // checkpoint
                 this.storeCheckpoint =
                     new StoreCheckpoint(StorePathConfigHelper.getStoreCheckpoint(this.messageStoreConfig.getStorePathRootDir()));
 
@@ -235,6 +237,7 @@ public class DefaultMessageStore implements MessageStore {
      */
     public void start() throws Exception {
 
+        // 文件独占锁
         lock = lockFile.getChannel().tryLock(0, 1, false);
         if (lock == null || lock.isShared() || !lock.isValid()) {
             throw new RuntimeException("Lock failed,MQ already started");
@@ -1409,24 +1412,35 @@ public class DefaultMessageStore implements MessageStore {
         File[] fileTopicList = dirLogic.listFiles();
         if (fileTopicList != null) {
 
+            // rocketmq_home /store/consumequeue
             for (File fileTopic : fileTopicList) {
+                // topicName
                 String topic = fileTopic.getName();
 
+                // queueId队列id
                 File[] fileQueueIdList = fileTopic.listFiles();
                 if (fileQueueIdList != null) {
+                    // 遍历这些queueId文件夹
                     for (File fileQueueId : fileQueueIdList) {
+                        // 文件名就是queueId
                         int queueId;
                         try {
                             queueId = Integer.parseInt(fileQueueId.getName());
                         } catch (NumberFormatException e) {
                             continue;
                         }
+
+                        // 构建ConsumeQueue logic
                         ConsumeQueue logic = new ConsumeQueue(
+                            // topicName
                             topic,
+                            // queueId
                             queueId,
+                            // storePath
                             StorePathConfigHelper.getStorePathConsumeQueue(this.messageStoreConfig.getStorePathRootDir()),
                             this.getMessageStoreConfig().getMappedFileSizeConsumeQueue(),
                             this);
+                        // 放入到某某里面
                         this.putConsumeQueue(topic, queueId, logic);
                         if (!logic.load()) {
                             return false;

@@ -54,14 +54,20 @@ public class ShutdownHookThread extends Thread {
     public void run() {
         synchronized (this) {
             log.info("shutdown hook was invoked, " + this.shutdownTimes.incrementAndGet() + " times.");
+            // 防止多次调用这个Shutdown实例
             if (!this.hasShutdown) {
+                // 赋值已经shutDown
                 this.hasShutdown = true;
+                // 标记开始时间
                 long beginTime = System.currentTimeMillis();
                 try {
+                    // invoke callback
                     this.callback.call();
                 } catch (Exception e) {
+                    // catch exceptions
                     log.error("shutdown hook callback invoked failure.", e);
                 }
+                // costTime
                 long consumingTimeTotal = System.currentTimeMillis() - beginTime;
                 log.info("shutdown hook done, consuming time total(ms): " + consumingTimeTotal);
             }

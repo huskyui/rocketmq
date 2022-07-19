@@ -39,14 +39,17 @@ public class BrokerStats {
     }
 
     public void record() {
+        // 将今天的数据赋值给昨天
         this.msgPutTotalYesterdayMorning = this.msgPutTotalTodayMorning;
         this.msgGetTotalYesterdayMorning = this.msgGetTotalTodayMorning;
 
+        // 获取消息总量
         this.msgPutTotalTodayMorning =
             this.defaultMessageStore.getStoreStatsService().getPutMessageTimesTotal();
         this.msgGetTotalTodayMorning =
             this.defaultMessageStore.getStoreStatsService().getGetMessageTransferedMsgCount().longValue();
 
+        // 记录一下，昨天 put get message的数量
         log.info("yesterday put message total: {}", msgPutTotalTodayMorning - msgPutTotalYesterdayMorning);
         log.info("yesterday get message total: {}", msgGetTotalTodayMorning - msgGetTotalYesterdayMorning);
     }
